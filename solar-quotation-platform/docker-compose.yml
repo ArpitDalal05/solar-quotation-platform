@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16
+    container_name: solarq-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: solarq
+    ports:
+      - "5432:5432"
+    volumes:
+      - solarq_pgdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+    container_name: solarq-backend
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      JWT_SECRET: dev-secret-change-me
+      COMPANY_NAME: Solar PV Solutions Pvt. Ltd.
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/solarq?schema=public
+    ports:
+      - "4000:4000"
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: solarq-frontend
+    environment:
+      VITE_API_BASE_URL: http://localhost:4000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  solarq_pgdata:
+

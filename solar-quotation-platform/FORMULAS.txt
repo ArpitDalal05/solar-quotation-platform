@@ -1,0 +1,10 @@
+ Quick reference (compact)
+- DailyConsumption = Monthly / 30
+- SystemCapacity_kW = DailyConsumption / (Irradiance_kWh_m2_day * Efficiency)
+- NumPanels = ceil(SystemCapacity_kW*1000 / PanelWattage)
+- AnnualGeneration = SystemCapacity_kW * Irradiance_kWh_m2_day * 365 * Efficiency
+- AnnualSavings = AnnualGeneration * ElectricityRate
+- BaseCost = SystemCapacity_kW*1000 * CostPerWatt
+- InstallationCost = BaseCost * InstallationMultiplier
+- TotalCost = (BaseCost + InstallationCost) * (1 + GST_RATE)
+- PaybackYears = TotalCost / AnnualSavings
