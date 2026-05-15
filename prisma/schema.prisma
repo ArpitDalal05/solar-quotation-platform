@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  users User[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  phone     String?  @unique
+  state     String?
+  city      String?
+  password  String
+  roleId    Int
+  role      Role     @relation(fields: [roleId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  quotations Quotation[]
+  customer  Customer?
+  calculations Calculation[]
+}
+
+model Customer {
+  id               Int      @id @default(autoincrement())
+  name             String
+  userId           Int?     @unique
+  user             User?    @relation(fields: [userId], references: [id])
+  location         String?
+  state            String?
+  electricityTariff Float?
+  sanctionedLoad   Float?
+  contactNumber    String?
+  email            String?
+  followupStatus   String?
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  quotations       Quotation[]
+  calculations     SolarCalculation[]
+}
+
+// Customer-saved solar calculator results (requested "calculations" table)
+model Calculation {
+  id                 Int      @id @default(autoincrement())
+  userId             Int
+  user               User     @relation(fields: [userId], references: [id])
+  monthlyConsumption Float
+  irradiance         Float
+  systemCapacityKw   Float
+  panels             Int
+  annualGeneration   Float
+  annualSavings      Float
+  totalCost          Float
+  payback            Float
+  createdAt          DateTime @default(now())
+  quotations         Quotation[]
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String
+  category    String
+  brand       String
+  description String?
+  costPerWatt Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  quotationItems QuotationItem[]
+}
+
+model PricingConfig {
+  id                 Int      @id @default(autoincrement())
+  structureTypeCost  Float
+  cablingCostPerWatt Float
+  installationCostPerWatt Float
+  transportCost      Float
+  marginPercent      Float
+  marginPerWatt      Float?
+  gstRate            Float
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model SolarCalculation {
+  id                     Int      @id @default(autoincrement())
+  customerId             Int?
+  customer               Customer? @relation(fields: [customerId], references: [id])
+  monthlyBill            Float?
+  connectedLoad          Float?
+  state                  String
+  roofType               String
+  plantCapacityKw        Float
+  annualGenerationKwh    Float
+  numberOfPanels         Int
+  inverterCapacityKw     Float
+  shadowFreeAreaRequired Float
+  createdAt              DateTime @default(now())
+  financialAnalysis      FinancialAnalysis?
+  // legacy: staff-facing calculation model (kept for compatibility)
+}
+
+model FinancialAnalysis {
+  id                 Int      @id @default(autoincrement())
+  calculationId      Int      @unique
+  calculation        SolarCalculation @relation(fields: [calculationId], references: [id])
+  totalProjectCost   Float
+  subsidyAmount      Float
+  netPayableAmount   Float
+  annualSavings      Float
+  paybackPeriodYears Float
+  savings25Years     Float
+  createdAt          DateTime @default(now())
+  quotations         Quotation[]
+}
+
+model Quotation {
+  id                 Int      @id @default(autoincrement())
+  quotationNumber    String   @unique
+  customerId         Int?
+  customer           Customer? @relation(fields: [customerId], references: [id])
+  customerName       String
+  userId             Int
+  user               User     @relation(fields: [userId], references: [id])
+  calculationId      Int?
+  calculation        Calculation? @relation(fields: [calculationId], references: [id])
+  salesExecutive     String?
+  financialAnalysisId Int?
+  financialAnalysis   FinancialAnalysis? @relation(fields: [financialAnalysisId], references: [id])
+  totalAmount        Float
+  netPayableAmount   Float
+  subsidyAmount      Float
+  pdfUrl             String?
+  status             String   @default("DRAFT")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  items              QuotationItem[]
+}
+
+model QuotationItem {
+  id           Int       @id @default(autoincrement())
+  quotationId  Int
+  quotation    Quotation @relation(fields: [quotationId], references: [id])
+  productId    Int
+  product      Product   @relation(fields: [productId], references: [id])
+  description  String
+  quantity     Int
+  unitPrice    Float
+  totalPrice   Float
+}
+
+model Report {
+  id          Int      @id @default(autoincrement())
+  type        String
+  payload     Json
+  createdAt   DateTime @default(now())
+}
